@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabaseClient";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,7 +10,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 export default function Navbar() {
-    const supabase = createClient();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -26,11 +26,10 @@ export default function Navbar() {
     }, []);
 
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
-        const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
-            setUser(session?.user || null);
+        const unsubscribe = onAuthStateChanged(auth, (u) => {
+            setUser(u);
         });
-        return () => listener?.subscription?.unsubscribe();
+        return () => unsubscribe();
     }, []);
 
     if (isDashboard) return null;

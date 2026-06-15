@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabaseClient";
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function AuthForm() {
-    const supabase = createClient();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
@@ -17,13 +17,14 @@ export default function AuthForm() {
 
     const handleGoogleLogin = async () => {
         setLoading(true);
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: {
-                redirectTo: `${location.origin}/auth/callback`,
-            },
-        });
-        if (error) alert(error.message);
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+            router.replace("/dashboard");
+            router.refresh();
+        } catch (error) {
+            alert(error.message);
+        }
         setLoading(false);
     };
 
@@ -31,26 +32,19 @@ export default function AuthForm() {
         e.preventDefault();
         setLoading(true);
 
-        if (method === "login") {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (error) alert(error.message);
-            else {
+        try {
+            if (method === "login") {
+                await signInWithEmailAndPassword(auth, email, password);
+                router.replace("/dashboard");
+                router.refresh();
+            } else {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Account created successfully!");
                 router.replace("/dashboard");
                 router.refresh();
             }
-        } else {
-            const { error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    emailRedirectTo: `${location.origin}/auth/callback`,
-                },
-            });
-            if (error) alert(error.message);
-            else alert("Check your email for the login link!");
+        } catch (error) {
+            alert(error.message);
         }
         setLoading(false);
     };

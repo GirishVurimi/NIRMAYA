@@ -1,4 +1,3 @@
-import cyvcf2
 import requests
 import tempfile
 import os
@@ -41,19 +40,21 @@ def parse_genomic_data(vcf_path: str):
     # or actually try to parse if the file is valid.
     
     try:
-        vcf = cyvcf2.VCF(vcf_path)
-        for variant in vcf:
-            # Extract RSID
-            rsid = variant.ID
-            variants_data.append({
-                "rsid": rsid,
-                "chrom": variant.CHROM,
-                "pos": variant.POS,
-                "ref": variant.REF,
-                "alt": variant.ALT
-            })
+        with open(vcf_path, 'r') as f:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                parts = line.strip().split('\t')
+                if len(parts) >= 5:
+                    variants_data.append({
+                        "rsid": parts[2],
+                        "chrom": parts[0],
+                        "pos": parts[1],
+                        "ref": parts[3],
+                        "alt": parts[4]
+                    })
     except Exception as e:
-        print(f"Warning: Could not parse VCF with cyvcf2 (might be mock/invalid file): {e}")
+        print(f"Warning: Could not parse VCF natively (might be mock/invalid file): {e}")
         # Add some mock variants for testing the rules engine if parsing fails
         # Specifically adding variants that trigger the rules in rules_engine.py
         variants_data = [

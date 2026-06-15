@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useRef } from 'react';
-import { createClient } from '@/lib/supabaseClient';
+import { auth, db } from '@/lib/firebase';
+import { supabaseStorage } from '@/lib/supabaseStorage';
+import { collection, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export default function VcfUploader({ onUploadComplete }) {
-    const supabase = createClient();
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -56,42 +57,44 @@ export default function VcfUploader({ onUploadComplete }) {
             await validateFile(file);
 
             setUploadProgress('Authenticating session...');
-            const { data: { user } } = await supabase.auth.getUser();
+            const user = auth.currentUser;
             if (!user) throw new Error("User authentication required. Please sign in again.");
 
-            const filePath = `${user.id}/${Date.now()}_${file.name}`;
+            const filePath = `${user.uid}/${Date.now()}_${file.name}`;
 
             setUploadProgress('Encrypting & transmitting to secure vault...');
-            const { error: uploadError } = await supabase.storage
+            const { data, error: uploadError } = await supabaseStorage
+                .storage
                 .from('vcf_uploads')
                 .upload(filePath, file, { upsert: false });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) throw new Error("Storage Error: " + uploadError.message);
 
             setUploadProgress('Generating secure signed URL...');
-            const { data: signedUrlData, error: urlError } = await supabase.storage
+            const { data: urlData, error: urlError } = await supabaseStorage
+                .storage
                 .from('vcf_uploads')
-                .createSignedUrl(filePath, 3600);
+                .createSignedUrl(filePath, 60 * 60);
 
-            if (urlError) throw urlError;
+            if (urlError || !urlData?.signedUrl) throw new Error("Could not generate secure link for the file.");
+            const downloadUrl = urlData.signedUrl;
 
             setUploadProgress('Recording metadata...');
-            const { error: dbError } = await supabase
-                .from('genomic_files')
-                .insert({
-                    user_id: user.id,
+            try {
+                await addDoc(collection(db, 'genomic_files'), {
+                    user_id: user.uid,
                     file_name: file.name,
                     file_path: filePath,
                     file_size: file.size,
                     status: 'processing',
+                    created_at: new Date()
                 });
-
-            if (dbError) {
+            } catch (dbError) {
                 console.warn('Could not save file metadata to DB:', dbError.message);
             }
 
             setUploadProgress('Dispatching to AI inference engine...');
-            if (onUploadComplete) onUploadComplete(signedUrlData.signedUrl, file.name);
+            if (onUploadComplete) onUploadComplete(downloadUrl, file.name);
 
         } catch (err) {
             console.error('Upload failed:', err);

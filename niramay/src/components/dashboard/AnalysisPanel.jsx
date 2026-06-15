@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, Loader2, ServerCrash, AlertCircle, FlaskConical, Pill } from 'lucide-react';
 import RiskResults from '@/components/dashboard/RiskResults';
 import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard';
-import { createClient } from '@/lib/supabaseClient';
+import { auth, db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 // ─── Supported drugs ─────────────────────────────────────────────────────────
 const SUPPORTED_DRUGS = ['CODEINE', 'WARFARIN', 'CLOPIDOGREL', 'SIMVASTATIN', 'AZATHIOPRINE', 'FLUOROURACIL'];
@@ -314,19 +315,19 @@ export default function AnalysisPanel({ vcfUrl, drugs: initialDrugs, onReset }) 
 
             // ── Save to Supabase ──────────────────────────────────────────
             try {
-                const supabase = createClient();
-                const { data: userData } = await supabase.auth.getUser();
-                if (userData?.user) {
-                    await supabase.from('analysis_results').insert({
-                        user_id: userData.user.id,
+                const user = auth.currentUser;
+                if (user) {
+                    await addDoc(collection(db, 'analysis_results'), {
+                        user_id: user.uid,
                         status: 'completed',
                         results_data: transformed,
                         raw_response: data,
                         drugs_analyzed: getEffectiveDrugs(),
+                        created_at: new Date()
                     });
                 }
             } catch (saveErr) {
-                console.warn('Could not save analysis to Supabase:', saveErr);
+                console.warn('Could not save analysis to DB:', saveErr);
             }
 
             setStatus('done');

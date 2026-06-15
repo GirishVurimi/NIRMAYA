@@ -53,31 +53,32 @@ export default function RiskResults({ data, rawResponse }) {
         switch (level) {
             case 'HIGH':
                 return {
-                    border: 'border-rose-500/50',
-                    bg: 'bg-rose-950/20 hover:bg-rose-900/30',
-                    text: 'text-rose-400',
-                    icon: <AlertTriangle className="w-5 h-5 text-rose-500" />,
-                    shadow: 'shadow-[0_0_15px_rgba(244,63,94,0.15)]',
-                    glow: {
-                        boxShadow: ["0 0 0px rgba(244,63,94,0)", "0 0 20px rgba(244,63,94,0.2)", "0 0 0px rgba(244,63,94,0)"]
-                    }
+                    border: 'border-rose-200/60',
+                    bg: 'bg-gradient-to-br from-rose-50/80 to-white/80 hover:from-rose-50 hover:to-rose-50/50',
+                    text: 'text-rose-600',
+                    badge: 'bg-rose-100 text-rose-700 border-rose-200',
+                    icon: <AlertTriangle className="w-6 h-6 text-rose-500" />,
+                    shadow: 'shadow-[0_8px_30px_rgba(244,63,94,0.06)]',
+                    glow: { boxShadow: ["0 0 0px rgba(244,63,94,0)", "0 0 20px rgba(244,63,94,0.15)", "0 0 0px rgba(244,63,94,0)"] }
                 };
             case 'MODERATE':
                 return {
-                    border: 'border-amber-500/40',
-                    bg: 'bg-amber-950/20 hover:bg-amber-900/30',
-                    text: 'text-amber-400',
-                    icon: <Activity className="w-5 h-5 text-amber-500" />,
-                    shadow: 'shadow-none',
+                    border: 'border-amber-200/60',
+                    bg: 'bg-gradient-to-br from-amber-50/80 to-white/80 hover:from-amber-50 hover:to-amber-50/50',
+                    text: 'text-amber-600',
+                    badge: 'bg-amber-100 text-amber-700 border-amber-200',
+                    icon: <Activity className="w-6 h-6 text-amber-500" />,
+                    shadow: 'shadow-[0_8px_30px_rgba(245,158,11,0.06)]',
                     glow: {}
                 };
             case 'LOW':
                 return {
-                    border: 'border-emerald-500/30',
-                    bg: 'bg-emerald-950/20 hover:bg-emerald-900/30',
-                    text: 'text-emerald-400',
-                    icon: <CheckCircle className="w-5 h-5 text-emerald-500" />,
-                    shadow: 'shadow-none',
+                    border: 'border-emerald-200/60',
+                    bg: 'bg-gradient-to-br from-emerald-50/80 to-white/80 hover:from-emerald-50 hover:to-emerald-50/50',
+                    text: 'text-emerald-600',
+                    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    icon: <CheckCircle className="w-6 h-6 text-emerald-500" />,
+                    shadow: 'shadow-[0_8px_30px_rgba(16,185,129,0.06)]',
                     glow: {}
                 };
             default:
@@ -86,21 +87,21 @@ export default function RiskResults({ data, rawResponse }) {
     };
 
     return (
-        <div className="w-full space-y-6">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm uppercase tracking-widest text-slate-400 font-semibold">
+        <div className="w-full space-y-8 mt-10">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                <h3 className="text-sm uppercase tracking-widest text-slate-800 font-bold">
                     Clinical Risk Assessment
                 </h3>
                 <button
                     onClick={() => setJsonOpen(!jsonOpen)}
-                    className="flex items-center gap-2 text-xs text-cyan-500 hover:text-cyan-400 transition-colors"
+                    className="flex items-center gap-2 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100"
                 >
                     <FileJson className="w-4 h-4" />
                     {jsonOpen ? 'Hide Source' : 'View Source'}
                 </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
                 <AnimatePresence>
                     {data.map((item, index) => {
                         const styles = getRiskStyles(item.riskLevel);
@@ -109,20 +110,16 @@ export default function RiskResults({ data, rawResponse }) {
                         return (
                             <motion.div
                                 key={item.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{
-                                    delay: index * 0.1,
-                                    duration: 0.4,
-                                    ease: "easeOut"
-                                }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                                 layout
-                                className={`relative rounded-xl border ${styles.border} ${styles.bg} ${styles.shadow} backdrop-blur-sm overflow-hidden transition-colors duration-300`}
+                                className={`relative rounded-3xl border ${styles.border} ${styles.bg} ${styles.shadow} backdrop-blur-xl overflow-hidden transition-all duration-300 hover:shadow-lg`}
                             >
                                 {/* High Risk Glow Animation */}
                                 {item.riskLevel === 'HIGH' && (
                                     <motion.div
-                                        className="absolute inset-0 pointer-events-none rounded-xl"
+                                        className="absolute inset-0 pointer-events-none rounded-3xl"
                                         animate={styles.glow}
                                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                                     />
@@ -131,37 +128,37 @@ export default function RiskResults({ data, rawResponse }) {
                                 {/* Card Header */}
                                 <div
                                     onClick={() => toggleCard(item.id)}
-                                    className="p-4 flex items-center justify-between cursor-pointer relative z-10"
+                                    className="px-6 py-5 flex items-center justify-between cursor-pointer relative z-10"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-2 rounded-lg bg-slate-950/50 border border-white/5`}>
+                                    <div className="flex items-center gap-5">
+                                        <div className={`p-3 rounded-2xl bg-white border ${styles.border} shadow-sm`}>
                                             {styles.icon}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-3 flex-wrap">
-                                                <h4 className="text-slate-100 font-medium tracking-wide">
+                                                <h4 className="text-lg text-slate-800 font-bold tracking-tight">
                                                     {item.gene}
                                                 </h4>
                                                 {item.drug && (
-                                                    <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border border-slate-700 text-slate-400 font-mono bg-slate-950/50">
-                                                        <FlaskConical className="w-2.5 h-2.5" />
+                                                    <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 font-semibold bg-white shadow-sm">
+                                                        <FlaskConical className="w-3.5 h-3.5 text-slate-400" />
                                                         {item.drug}
                                                     </span>
                                                 )}
-                                                <span className={`text-[10px] px-2 py-0.5 rounded border ${styles.border} ${styles.text} font-mono uppercase bg-slate-950/50`}>
+                                                <span className={`text-[10px] px-2.5 py-1 rounded-lg border ${styles.badge} font-bold uppercase shadow-sm tracking-wide`}>
                                                     {item.riskLevel}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-slate-400 mt-1 font-mono">
-                                                {item.phenotype} · Variant: {item.variant}
+                                            <p className="text-xs text-slate-500 mt-1.5 font-medium">
+                                                {item.phenotype} <span className="mx-1 text-slate-300">|</span> Variant: <span className="font-mono bg-slate-100 px-1 rounded text-slate-600">{item.variant}</span>
                                             </p>
                                         </div>
                                     </div>
 
                                     <motion.div
                                         animate={{ rotate: isExpanded ? 180 : 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="text-slate-500"
+                                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm"
                                     >
                                         <ChevronDown className="w-5 h-5" />
                                     </motion.div>
@@ -174,42 +171,42 @@ export default function RiskResults({ data, rawResponse }) {
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: "auto", opacity: 1 }}
                                             exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="relative z-10 border-t border-white/5 bg-slate-950/30"
+                                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                                            className="relative z-10 border-t border-slate-200/50 bg-white/50"
                                         >
-                                            <div className="p-4 space-y-4 text-sm">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="p-6 md:p-8 space-y-6">
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                                     <div>
-                                                        <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Impact Analysis</span>
-                                                        <p className="text-slate-300 leading-relaxed font-light">
+                                                        <span className="text-xs text-slate-400 font-bold uppercase tracking-widest block mb-3">Impact Analysis</span>
+                                                        <p className="text-sm text-slate-600 leading-relaxed bg-white border border-slate-100 p-5 rounded-2xl shadow-sm">
                                                             {item.description}
                                                         </p>
                                                     </div>
-                                                    <div className="space-y-3">
+                                                    <div className="space-y-5">
                                                         <div>
-                                                            <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Phenotype</span>
-                                                            <p className="text-slate-300">{item.phenotype}</p>
+                                                            <span className="text-xs text-slate-400 font-bold uppercase tracking-widest block mb-3">Phenotype</span>
+                                                            <p className="text-sm text-slate-700 font-semibold">{item.phenotype}</p>
                                                         </div>
                                                         <div>
-                                                            <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Clinical Action</span>
-                                                            <p className={`text-xs ${styles.text} bg-slate-950/50 p-2 rounded border border-white/5 leading-relaxed`}>
+                                                            <span className="text-xs text-slate-400 font-bold uppercase tracking-widest block mb-3">Clinical Action</span>
+                                                            <div className={`text-sm ${styles.text} bg-white p-5 rounded-2xl border ${styles.border} shadow-sm leading-relaxed font-medium`}>
                                                                 {item.recommendation}
-                                                            </p>
+                                                            </div>
                                                         </div>
                                                         {item.dosingRecommendation && (
                                                             <div>
-                                                                <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Dosing Recommendation</span>
-                                                                <p className="text-xs text-slate-300 bg-slate-950/50 p-2 rounded border border-white/5 leading-relaxed">
+                                                                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest block mb-3">Dosing Recommendation</span>
+                                                                <p className="text-sm text-slate-600 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm leading-relaxed">
                                                                     {item.dosingRecommendation}
                                                                 </p>
                                                             </div>
                                                         )}
                                                         {item.alternativeDrugs && item.alternativeDrugs.length > 0 && (
                                                             <div>
-                                                                <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Alternative Drugs</span>
-                                                                <div className="flex flex-wrap gap-1.5">
+                                                                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest block mb-3">Alternative Drugs</span>
+                                                                <div className="flex flex-wrap gap-2">
                                                                     {item.alternativeDrugs.map((alt, i) => (
-                                                                        <span key={i} className="text-[10px] font-mono px-2 py-0.5 rounded border border-cyan-500/20 text-cyan-400/80 bg-cyan-950/30">
+                                                                        <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-indigo-100 text-indigo-600 bg-indigo-50 shadow-sm">
                                                                             {alt}
                                                                         </span>
                                                                     ))}
@@ -217,20 +214,20 @@ export default function RiskResults({ data, rawResponse }) {
                                                             </div>
                                                         )}
                                                         {(item.confidence || item.guidelineSource) && (
-                                                            <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                                            <div className="flex items-center gap-3 mt-4 flex-wrap pt-4 border-t border-slate-200/50">
                                                                 {item.confidence && (
-                                                                    <span className="text-[10px] font-mono text-slate-600 border border-slate-800 rounded px-2 py-0.5">
+                                                                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
                                                                         Confidence: {(item.confidence * 100).toFixed(0)}%
                                                                     </span>
                                                                 )}
                                                                 {item.guidelineSource && (
-                                                                    <span className="flex items-center gap-1 text-[10px] font-mono text-slate-600 border border-slate-800 rounded px-2 py-0.5">
-                                                                        <BookOpen className="w-2.5 h-2.5" />
+                                                                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
+                                                                        <BookOpen className="w-3 h-3" />
                                                                         {item.guidelineSource}
                                                                     </span>
                                                                 )}
                                                                 {item.citations && item.citations.map((c, i) => (
-                                                                    <span key={i} className="text-[10px] font-mono text-cyan-700/60 border border-cyan-900/30 rounded px-2 py-0.5">
+                                                                    <span key={i} className="text-[10px] font-bold text-indigo-500/80 bg-indigo-50 rounded-lg px-2.5 py-1 border border-indigo-100/50">
                                                                         {c}
                                                                     </span>
                                                                 ))}
@@ -252,33 +249,33 @@ export default function RiskResults({ data, rawResponse }) {
             <AnimatePresence>
                 {jsonOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="mt-6 rounded-xl border border-cyan-500/20 bg-slate-950/80 backdrop-blur overflow-hidden"
+                        exit={{ opacity: 0, y: 20 }}
+                        className="mt-8 rounded-3xl border border-slate-200 bg-white shadow-xl overflow-hidden"
                     >
-                        <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/10 bg-cyan-950/10">
-                            <span className="text-xs font-mono text-cyan-500">JSON Output</span>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <span className="text-sm font-bold text-slate-700">JSON Output</span>
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleCopy}
-                                    className="p-1.5 hover:bg-cyan-500/10 rounded text-cyan-400 transition-colors flex items-center gap-1"
+                                    className="p-2 hover:bg-white rounded-xl text-slate-500 shadow-sm border border-transparent hover:border-slate-200 transition-all flex items-center gap-2"
                                     title="Copy to Clipboard"
                                 >
                                     <Copy className="w-4 h-4" />
-                                    {copySuccess && <span className="text-[10px] text-emerald-400">Copied!</span>}
+                                    {copySuccess && <span className="text-[10px] font-bold text-emerald-500">Copied!</span>}
                                 </button>
                                 <button
                                     onClick={handleDownload}
-                                    className="p-1.5 hover:bg-cyan-500/10 rounded text-cyan-400 transition-colors"
+                                    className="p-2 hover:bg-white rounded-xl text-slate-500 shadow-sm border border-transparent hover:border-slate-200 transition-all"
                                     title="Download JSON"
                                 >
                                     <Download className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
-                        <div className="p-4 overflow-x-auto max-h-96">
-                            <pre className="text-[10px] font-mono text-cyan-200/70 leading-relaxed whitespace-pre-wrap">
+                        <div className="p-6 overflow-x-auto max-h-96 bg-slate-800">
+                            <pre className="text-xs font-mono text-emerald-400 leading-relaxed whitespace-pre-wrap">
                                 {JSON.stringify(rawResponse || data, null, 2)}
                             </pre>
                         </div>

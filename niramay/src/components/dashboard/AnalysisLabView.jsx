@@ -376,15 +376,13 @@ export default function AnalysisLabView({ genomicFiles, onGoToUpload }) {
         setError(null);
         setPipelineStage(0);
 
-        // Generate signed URL for the selected file
         let vcfUrl = null;
         try {
-            // Import client-side supabase
-            const { createClient } = await import('@/lib/supabaseClient');
-            const supabase = createClient();
-            const { data, error: urlErr } = await supabase.storage
+            const { supabaseStorage } = await import('@/lib/supabaseStorage');
+            const { data, error: urlErr } = await supabaseStorage.storage
                 .from('vcf_uploads')
                 .createSignedUrl(selectedFile.file_path, 3600);
+            
             if (urlErr || !data?.signedUrl) throw new Error('Could not generate signed URL for your VCF file.');
             vcfUrl = data.signedUrl;
         } catch (err) {

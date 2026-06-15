@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabaseClient';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,7 +18,6 @@ import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard';
    ANALYTICS PAGE — Past queries + visual dashboard
    ══════════════════════════════════════════════════════════════════════════════ */
 export default function AnalyticsPage() {
-    const supabase = createClient();
     const router = useRouter();
 
     const [user, setUser] = useState(null);
@@ -28,10 +29,11 @@ export default function AnalyticsPage() {
 
     /* ── Auth gate ──────────────────────────────────────────────────────── */
     useEffect(() => {
-        supabase.auth.getUser().then(({ data: { user: u } }) => {
+        const unsubscribe = onAuthStateChanged(auth, (u) => {
             if (!u) { router.replace('/auth'); return; }
             setUser(u);
         });
+        return () => unsubscribe();
     }, []);
 
     /* ── Fetch past analyses ───────────────────────────────────────────── */
@@ -39,20 +41,29 @@ export default function AnalyticsPage() {
         if (!user) return;
         const fetchAnalyses = async () => {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('analysis_results')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
-
-            if (!error && data) setAnalyses(data);
+            try {
+                const q = query(
+                    collection(db, 'analysis_results'),
+                    where('user_id', '==', user.uid),
+                    orderBy('created_at', 'desc')
+                );
+                const querySnapshot = await getDocs(q);
+                const data = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    created_at: doc.data().created_at?.toDate ? doc.data().created_at.toDate().toISOString() : doc.data().created_at
+                }));
+                setAnalyses(data);
+            } catch (err) {
+                console.error(err);
+            }
             setLoading(false);
         };
         fetchAnalyses();
     }, [user]);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        await signOut(auth);
         router.replace('/');
     };
 

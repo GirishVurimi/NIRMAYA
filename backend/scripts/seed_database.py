@@ -69,7 +69,7 @@ def semantic_chunker(text, size=300, overlap=50):
     return [" ".join(words[i:i + size]) for i in range(0, len(words), size - overlap)]
 
 def seed_niramay_db():
-    print("🚀 Initializing Neuro-Symbolic Seeding...")
+    print("Initializing Neuro-Symbolic Seeding...")
     payloads = []
 
     for key, text in clinical_corpus.items():
@@ -99,9 +99,9 @@ def seed_niramay_db():
             })
 
     # Batch upload to Pinecone
-    print(f"📦 Uploading {len(payloads)} high-fidelity medical vectors...")
+    print(f"Uploading {len(payloads)} high-fidelity medical vectors...")
     index.upsert(vectors=payloads)
-    print("✅ Niramay Knowledge Base is officially Online. System ready for live RAG.")
+    print("Niramay Knowledge Base is officially Online. System ready for live RAG.")
 
 if __name__ == "__main__":
     seed_niramay_db()

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClient } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { updatePassword } from 'firebase/auth';
 import {
     Shield, Lock, KeyRound, Eye, EyeOff,
     CheckCircle2, AlertCircle, Loader2, LogOut,
@@ -93,13 +94,13 @@ function PasswordStrength({ password }) {
 // ── Session Info ──────────────────────────────────────────────────────────────
 
 function SessionCard({ user }) {
-    const signedIn = user?.last_sign_in_at
-        ? new Date(user.last_sign_in_at).toLocaleString(undefined, {
+    const signedIn = user?.metadata?.lastSignInTime
+        ? new Date(user.metadata.lastSignInTime).toLocaleString(undefined, {
             weekday: 'short', month: 'short', day: 'numeric',
             hour: '2-digit', minute: '2-digit',
         })
         : '—';
-    const provider = user?.app_metadata?.provider || 'email';
+    const provider = user?.providerData?.[0]?.providerId === 'google.com' ? 'google' : 'email';
 
     return (
         <div className="space-y-3">
@@ -107,7 +108,7 @@ function SessionCard({ user }) {
                 { icon: Fingerprint, label: 'Auth Provider', value: provider.charAt(0).toUpperCase() + provider.slice(1) },
                 { icon: Globe, label: 'Email', value: user?.email || '—' },
                 { icon: Clock, label: 'Last Sign-In', value: signedIn },
-                { icon: Monitor, label: 'User ID', value: user?.id?.slice(0, 20) + '…', mono: true },
+                { icon: Monitor, label: 'User ID', value: user?.uid?.slice(0, 20) + '…', mono: true },
             ].map(({ icon: Icon, label, value, mono }) => (
                 <div key={label} className="flex items-start justify-between py-2 border-b border-slate-800/60 last:border-0">
                     <div className="flex items-center gap-2.5 text-xs text-slate-500">
@@ -126,7 +127,6 @@ function SessionCard({ user }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function SecurityView({ user, onSignOut }) {
-    const supabase = createClient();
 
     const [currentPw, setCurrentPw] = useState('');
     const [newPw, setNewPw] = useState('');
@@ -135,7 +135,7 @@ export default function SecurityView({ user, onSignOut }) {
     const [toast, setToast] = useState(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
 
-    const isOAuthUser = user?.app_metadata?.provider === 'google';
+    const isOAuthUser = user?.providerData?.some(p => p.providerId === 'google.com');
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -149,9 +149,7 @@ export default function SecurityView({ user, onSignOut }) {
 
         setSaving(true);
         try {
-            // Supabase Auth updateUser — the user must be authenticated (session cookie is set)
-            const { error } = await supabase.auth.updateUser({ password: newPw });
-            if (error) throw error;
+            await updatePassword(auth.currentUser, newPw);
             setCurrentPw('');
             setNewPw('');
             setConfirmPw('');

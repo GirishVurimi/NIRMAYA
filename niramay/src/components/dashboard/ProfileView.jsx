@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClient } from '@/lib/supabaseClient';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
 import {
     User, Building2, Stethoscope, FileText,
     Save, CheckCircle2, AlertCircle, Loader2,
@@ -84,8 +86,8 @@ function Toast({ message, type }) {
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
 function AvatarDisplay({ user, profile }) {
-    const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
-    const initials = (profile?.full_name || user?.user_metadata?.full_name || user?.email || '?')
+    const avatarUrl = profile?.avatar_url || user?.photoURL;
+    const initials = (profile?.full_name || user?.displayName || user?.email || '?')
         .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
     return (
@@ -105,7 +107,6 @@ function AvatarDisplay({ user, profile }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ProfileView({ user }) {
-    const supabase = createClient();
 
     // Form state
     const [fullName, setFullName] = useState('');
@@ -125,15 +126,13 @@ export default function ProfileView({ user }) {
         if (!user) return;
         (async () => {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('full_name, institution, specialty, bio, avatar_url')
-                .eq('id', user.id)
-                .single();
+            const docRef = doc(db, 'user_profiles', user.uid);
+            const docSnap = await getDoc(docRef);
 
-            if (data) {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
                 const vals = {
-                    fullName: data.full_name || user.user_metadata?.full_name || user.user_metadata?.name || '',
+                    fullName: data.full_name || user.displayName || '',
                     institution: data.institution || '',
                     specialty: data.specialty || '',
                     bio: data.bio || '',
@@ -146,7 +145,7 @@ export default function ProfileView({ user }) {
             } else {
                 // No profile row yet — pre-fill from auth metadata
                 const fallback = {
-                    fullName: user.user_metadata?.full_name || user.user_metadata?.name || '',
+                    fullName: user.displayName || '',
                     institution: '',
                     specialty: '',
                     bio: '',
@@ -179,7 +178,7 @@ export default function ProfileView({ user }) {
         setSaving(true);
         try {
             const payload = {
-                id: user.id,
+                user_id: user.uid,
                 full_name: fullName.trim(),
                 institution: institution.trim(),
                 specialty: specialty.trim(),
@@ -187,16 +186,10 @@ export default function ProfileView({ user }) {
                 updated_at: new Date().toISOString(),
             };
 
-            // Upsert into user_profiles
-            const { error } = await supabase
-                .from('user_profiles')
-                .upsert(payload, { onConflict: 'id' });
+            await setDoc(doc(db, 'user_profiles', user.uid), payload, { merge: true });
 
-            if (error) throw error;
-
-            // Also update Supabase Auth display name so the session reflects it
-            if (fullName.trim() && fullName.trim() !== user.user_metadata?.full_name) {
-                await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
+            if (fullName.trim() && fullName.trim() !== user.displayName) {
+                await updateProfile(auth.currentUser, { displayName: fullName.trim() });
             }
 
             const newVals = { fullName, institution, specialty, bio };
@@ -266,7 +259,7 @@ export default function ProfileView({ user }) {
                             </div>
                             <div className="flex items-center gap-2 text-xs text-slate-500">
                                 <Hash className="w-3 h-3" />
-                                <span className="font-mono truncate max-w-xs">{user.id}</span>
+                                <span className="font-mono truncate max-w-xs">{user.uid}</span>
                             </div>
                         </div>
                     </div>

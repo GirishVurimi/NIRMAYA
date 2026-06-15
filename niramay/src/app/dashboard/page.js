@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -106,7 +107,6 @@ function StepBadge({ number, label, active }) {
    MAIN DASHBOARD
    ══════════════════════════════════════════════════════════════════════════════ */
 export default function Dashboard() {
-    const supabase = createClient();
     const router = useRouter();
 
     const [user, setUser] = useState(null);
@@ -114,15 +114,16 @@ export default function Dashboard() {
     const [showAnalysis, setShowAnalysis] = useState(false);
 
     useEffect(() => {
-        supabase.auth.getUser().then(({ data: { user: u } }) => {
+        const unsubscribe = onAuthStateChanged(auth, (u) => {
             if (!u) { router.replace('/auth'); return; }
             setUser(u);
         });
+        return () => unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        await signOut(auth);
         router.replace('/');
     };
 
