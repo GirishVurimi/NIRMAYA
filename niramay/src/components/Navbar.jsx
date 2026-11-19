@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,7 +12,6 @@ export default function Navbar() {
     const pathname = usePathname();
 
     const [scrolled, setScrolled] = useState(false);
-    const [user, setUser] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
 
     const isDashboard = pathname?.startsWith("/dashboard") || pathname?.startsWith("/analytics");
@@ -25,18 +22,11 @@ export default function Navbar() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (u) => {
-            setUser(u);
-        });
-        return () => unsubscribe();
-    }, []);
-
     if (isDashboard) return null;
 
     const handleDashboardClick = (e) => {
         e.preventDefault();
-        router.push(user ? "/dashboard" : "/auth");
+        router.push("/dashboard");
     };
 
     const navLinks = [
@@ -110,7 +100,7 @@ export default function Navbar() {
                         onClick={handleDashboardClick}
                         className="px-5 py-2 text-[13px] font-semibold tracking-wide text-white bg-[#0077b6] hover:bg-[#03045e] rounded-full transition-all duration-300 hover:shadow-[0_4px_20px_rgba(0,119,182,0.3)]"
                     >
-                        {user ? "Dashboard" : "Get Started"}
+                        Dashboard
                     </button>
                 </div>
 
@@ -150,7 +140,7 @@ export default function Navbar() {
                                     onClick={() => { setMenuOpen(false); handleDashboardClick(new Event('click')); }}
                                     className="w-full px-4 py-3 text-[14px] font-semibold text-white bg-[#0077b6] rounded-xl"
                                 >
-                                    {user ? "Dashboard" : "Get Started"}
+                                    Dashboard
                                 </button>
                             </div>
                         </div>

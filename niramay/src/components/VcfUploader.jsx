@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useRef } from 'react';
-import { auth, db } from '@/lib/firebase';
 import { supabaseStorage } from '@/lib/supabaseStorage';
-import { collection, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
@@ -57,10 +55,10 @@ export default function VcfUploader({ onUploadComplete }) {
             await validateFile(file);
 
             setUploadProgress('Authenticating session...');
-            const user = auth.currentUser;
-            if (!user) throw new Error("User authentication required. Please sign in again.");
+            // Hackathon: Bypass auth, use anonymous ID
+            const pseudoUserId = "anonymous_user";
 
-            const filePath = `${user.uid}/${Date.now()}_${file.name}`;
+            const filePath = `${pseudoUserId}/${Date.now()}_${file.name}`;
 
             setUploadProgress('Encrypting & transmitting to secure vault...');
             const { data, error: uploadError } = await supabaseStorage
@@ -80,18 +78,8 @@ export default function VcfUploader({ onUploadComplete }) {
             const downloadUrl = urlData.signedUrl;
 
             setUploadProgress('Recording metadata...');
-            try {
-                await addDoc(collection(db, 'genomic_files'), {
-                    user_id: user.uid,
-                    file_name: file.name,
-                    file_path: filePath,
-                    file_size: file.size,
-                    status: 'processing',
-                    created_at: new Date()
-                });
-            } catch (dbError) {
-                console.warn('Could not save file metadata to DB:', dbError.message);
-            }
+            // Hackathon: Skip saving to Firestore since we removed auth
+            // try { ... }
 
             setUploadProgress('Dispatching to AI inference engine...');
             if (onUploadComplete) onUploadComplete(downloadUrl, file.name);

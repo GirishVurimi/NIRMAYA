@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -109,21 +107,14 @@ function StepBadge({ number, label, active }) {
 export default function Dashboard() {
     const router = useRouter();
 
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState({ email: 'guest@niramay.local' }); // Dummy user for UI
     const [uploadedFileUrl, setUploadedFileUrl] = useState(null);
     const [showAnalysis, setShowAnalysis] = useState(false);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (u) => {
-            if (!u) { router.replace('/auth'); return; }
-            setUser(u);
-        });
-        return () => unsubscribe();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Auth check removed for hackathon
 
     const handleSignOut = async () => {
-        await signOut(auth);
+        // No real auth to sign out of, just go home
         router.replace('/');
     };
 

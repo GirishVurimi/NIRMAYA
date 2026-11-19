@@ -55,8 +55,12 @@ def _is_key_error(error_str):
     return any(e in error_str for e in key_errors)
 
 # Pinecone Vector DB
-pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-index = pc.Index("niramay-cpic")
+try:
+    pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+    index = pc.Index("niramay-cpic")
+except Exception as e:
+    logger.error(f"[INIT] 🚨 Pinecone Init Failed: {e}. RAG disabled.")
+    index = None
 
 GEMINI_MODEL_CASCADE = [
     "gemini-2.0-flash",           # New 2.0 Flash is faster
@@ -91,6 +95,9 @@ def _embed_query(query_text):
 
 def _retrieve_cpic_context_sync(drug, phenotype):
     """Queries Pinecone with retry for SSL/Network issues."""
+    if not index:
+        return ""
+
     query_text = f"{drug} {phenotype} pharmacogenomic mechanism biological pathway"
     
     # 1. Embed query (cascading keys)
